@@ -91,7 +91,7 @@ def clientthread(c, ip):
         try:
             message = c.recv(1000)
             if len(message) == 0: #client should not send empty messages
-                raise IOError, "Client quit"
+                raise IOError, "Client exit."
         except:
             sendmessage("%s quit: %s" % (nick, sys.exc_info()[1]), "tehsrvr")
             freenick(nick)

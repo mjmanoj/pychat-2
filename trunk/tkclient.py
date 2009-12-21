@@ -7,17 +7,18 @@ class App:
         frame = Frame(master)
         frame.pack()
 
-        self.texvar = StringVar()
-        self.texvar.set("")
-
         self.entry = Entry(frame, width=70)
         self.entry.bind("<Return>", self.gettext)
         self.entry.pack(side=BOTTOM)
 
+        self.texvar = StringVar()
+        self.texvar.set("")
         self.label = Label(frame, textvariable=self.texvar)
         self.label.pack(side=BOTTOM)
 
-        self.box = ScrolledText.ScrolledText(frame, state = DISABLED)
+        self.box = ScrolledText.ScrolledText(frame, wrap=WORD)
+        self.box.insert(END, 'Welcome to PyChat 2!')
+        self.box.config(state=DISABLED)
         self.box.pack(side=TOP)
         
         self.buffer = ''
@@ -27,7 +28,7 @@ class App:
 
     def printtex(self, text):
         self.box.config(state=NORMAL)
-        self.box.insert(END,text+"\n")
+        self.box.insert(END,"\n"+text)
         self.box.config(state=DISABLED)
         self.box.yview_scroll(1,"units")
         
