@@ -1,5 +1,5 @@
 from Tkinter import *
-import client, thread, time
+import client, thread, time, ScrolledText
 
 class App:
     def __init__(self, master):
@@ -17,7 +17,7 @@ class App:
         self.label = Label(frame, textvariable=self.texvar)
         self.label.pack(side=BOTTOM)
 
-        self.box = Text(frame, state = DISABLED)
+        self.box = ScrolledText.ScrolledText(frame, state = DISABLED)
         self.box.pack(side=TOP)
         
         self.buffer = ''
