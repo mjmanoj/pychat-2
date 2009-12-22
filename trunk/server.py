@@ -85,7 +85,8 @@ def clientthread(c, ip):
         c.send("!TERMINATE")
         c.close()
         return
-    print "%s is now known as %s" % (ip, nick)
+    print "%s logged in as %s" % (ip, nick)
+    sendmessage("%s joined!" % nick, 'tehsrvr')
     c.send("!CHATMODE")
     thread.start_new_thread(sendloop, (c, nick))
     time.sleep(0.1)

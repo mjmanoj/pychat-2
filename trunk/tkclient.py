@@ -54,7 +54,6 @@ class App:
         self.bufferfull = True
 
     def blockinput(self, prompt=''):
-        #TODO: set prompt to prompt variable
         if prompt != '':
             self.texvar.set(prompt)
         else:
