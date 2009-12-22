@@ -22,20 +22,26 @@ def netmanager(s, outfunc, infunc, killfunc):
             command = '!TERMINATE'
         if not command.startswith("!"):
             outfunc(command)
+        elif command.startswith("!CHATMODE"):
+            outfunc("Nickname accepted, entering chat mode.")
+            thread.start_new_thread(inputthread, (s, infunc))
         elif command.startswith("!NOTE"):
             outfunc(string.replace(command, "!NOTE ", "Server: "))
-        elif command.startswith("!SENDNICK"):
-            s.send(infunc("Enter nickname: "))
-        elif command.startswith("!CHATMODE"):
-            outfunc("Entering chat mode at server's request.")
-            thread.start_new_thread(inputthread, (s, infunc))
         elif command.startswith("!TERMINATE"):
-            outfunc("Client terminated by server...")
+            outfunc("Client terminated.")
             s.close()
             killfunc()
  
 def callbacks(outfunc, infunc, killfunc):
-    s.connect((IP, 59387))
+    nick = (infunc("Enter nickname: "))
+    outfunc("Connecting...")
+    try:
+        s.connect((IP, 59387))
+    except:
+        outfunc("Could not connect to server: " + sys.exc_info()[1])
+        killfunc()
+    outfunc("Server found.")
+    s.send(nick)
     netmanager(s, outfunc, infunc, killfunc)
 
 def main():
