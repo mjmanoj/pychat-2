@@ -7,20 +7,25 @@ class App:
         frame = Frame(master)
         frame.pack()
 
-        self.entry = Entry(frame, width=70)
-        self.entry.bind("<Return>", self.gettext)
-        self.entry.pack(side=BOTTOM)
-
-        self.texvar = StringVar()
-        self.texvar.set("")
-        self.label = Label(frame, textvariable=self.texvar)
-        self.label.pack(side=BOTTOM)
-
-        self.box = ScrolledText.ScrolledText(frame, wrap=WORD)
+        self.box = ScrolledText.ScrolledText(frame, wrap=WORD, width = 80)
         self.box.insert(END, 'Welcome to PyChat 2!')
         self.box.config(state=DISABLED)
         self.box.pack(side=TOP)
-        
+
+        entryframe = Frame(master = frame)
+        entryframe.pack()
+
+        self.texvar = StringVar()
+        self.texvar.set("")
+        self.label = Label(entryframe, textvariable=self.texvar)
+        self.label.pack(side=LEFT)
+
+        self.entry = Entry(entryframe, width = 60)
+        self.entry.bind("<Return>", self.gettext)
+        self.entry.pack(side=LEFT)
+
+        entryframe.pack(side=LEFT)
+
         self.buffer = ''
         self.bufferfull = False
 
