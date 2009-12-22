@@ -4,10 +4,12 @@ import client, thread, time, ScrolledText
 class App:
     def __init__(self, master):
 
-        frame = Frame(master)
+        root.resizable(width=FALSE, height=FALSE)
+
+        frame = Frame(master, bg= "#1C5FBA")
         frame.pack()
 
-        self.box = ScrolledText.ScrolledText(frame, wrap=WORD, width = 80)
+        self.box = ScrolledText.ScrolledText(frame, wrap=WORD, width = 80, relief = GROOVE)
         self.box.insert(END, 'Welcome to PyChat 2!')
         self.box.config(state=DISABLED)
         self.box.pack(side=TOP)
@@ -17,12 +19,15 @@ class App:
 
         self.texvar = StringVar()
         self.texvar.set("")
-        self.label = Label(entryframe, textvariable=self.texvar)
+        self.label = Label(entryframe, textvariable=self.texvar, bg= "#1C5FBA", fg = "#F1E300")
         self.label.pack(side=LEFT)
 
         self.entry = Entry(entryframe, width = 60)
         self.entry.bind("<Return>", self.gettext)
         self.entry.pack(side=LEFT)
+
+        self.quitter = Button(frame, relief = RIDGE, text = "Quit", fg = "#F1E300", bg = "#1C5FBA", command = self.quitbutton, state = DISABLED)
+        self.quitter.pack(side=RIGHT)
 
         entryframe.pack(side=LEFT)
 
@@ -36,6 +41,11 @@ class App:
         self.box.insert(END,"\n"+text)
         self.box.config(state=DISABLED)
         self.box.yview_scroll(1,"units")
+
+    def quitbutton(self):
+        self.buffer = "/exit"
+        self.bufferfull = True
+        
         
     def gettext(self, e):
         text = self.entry.get()
@@ -49,6 +59,7 @@ class App:
             self.texvar.set(prompt)
         else:
             self.texvar.set("Say:")
+            self.quitter.config(state = NORMAL, relief = RAISED)
         while 1:
             if self.bufferfull:
                 self.bufferfull = False
