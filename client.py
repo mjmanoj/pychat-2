@@ -18,6 +18,8 @@ def inputthread(s, infunc):
 def netmanager(s, outfunc, infunc, killfunc):
     while 1:
         command = s.recv(1024)
+        if len(command) == 0:
+            command = '!TERMINATE'
         if not command.startswith("!"):
             outfunc(command)
         elif command.startswith("!NOTE"):

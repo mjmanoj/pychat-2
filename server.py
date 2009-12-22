@@ -10,8 +10,8 @@ sock.listen(5) #listen for up to 5 new incoming requests at the same moment
 nicklist = []
 def registernick(nick):
     collision = 0
-    if nick == "tehsrvr":
-        collision = 1 #that one is permenantly reserved
+    if len(nick) < 1 or nick == "tehsrvr": #that one is permenantly reserved
+        return 1
     for usedname in nicklist:
         if nick == usedname:
             collision = 1
@@ -24,6 +24,10 @@ def registernick(nick):
 def freenick(nick):
     nicklist.remove(nick)
     return
+
+def changenick(old, new):
+    nicklist.remove(old)
+    nicklist.append(new)
 
 def nickregistered(nick):
     collision = 0
@@ -102,18 +106,15 @@ def clientthread(c, ip):
             sendmessage(" * %s %s" % (nick,message), nick)
         elif message[:5] == '/list':
             c.send('!NOTE Current users: ' + string.join(userlist(), ', '))
+        elif message[:5] == '/nick':
+            oldnick = nick
+            nick = string.split(message)[1]
+            changenick(oldnick, nick)
+            sendmessage(' The user %s is now known as %s' % (oldnick, nick), 'tehsrvr')
         elif message[:5] == '/exit':
             c.send('!TERMINATE')
         else:
             sendmessage("<%s> %s" % (nick, message), nick)
-
-        
-def varmon():
-    while 1:
-        global outmessagetext, outmessageid
-        print outmessagetext, outmessageid
-        time.sleep(2)
-#thread.start_new_thread(varmon, ())
 
 def main():
     print "Accepting clients from port %d" % port
