@@ -45,7 +45,7 @@ def sendmessage(text, nick):
     global outmessagetext, outmessageid
     if not nickregistered(nick) and nick != "tehsrvr":
         thread.exit_thread()
-    if not nick == 'tehsrvrnotnotnotnot': #no timestamp on server messages (disabled)
+    if not text.startswith('!') and not nick == 'tehsrvr': #no timestamp on server commands (disabled)
         stamp = time.localtime()
         asciistamp = "%d:%d" % (stamp.tm_hour, stamp.tm_min)
         if stamp.tm_min < 10: asciistamp = string.replace(asciistamp, ':', ':0')
@@ -88,9 +88,11 @@ def clientthread(c, ip):
         return
     print "%s is now known as %s" % (ip, nick)
     c.send("!CHATMODE")
+    thread.start_new_thread(sendloop, (c, nick))
     time.sleep(0.1)
     sendmessage("%s joined!" % nick, 'tehsrvr')
-    thread.start_new_thread(sendloop, (c, nick))
+    time.sleep(0.1)
+    c.send('!NOTE Current users are: ' + string.join(userlist(), ', '))
     while 1: #recv loop. spends most of time on c.recv()
         try:
             message = c.recv(1000)
