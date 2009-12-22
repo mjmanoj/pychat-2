@@ -1,4 +1,4 @@
-import socket, thread, string
+import socket, thread, string, sys
 
 try:
     #if you want to use a server other than localhost, add a file
