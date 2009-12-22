@@ -10,7 +10,7 @@ sock.listen(5) #listen for up to 5 new incoming requests at the same moment
 nicklist = []
 def registernick(nick):
     collision = 0
-    if len(nick) < 1 or nick == "tehsrvr": #that one is permenantly reserved
+    if len(nick) < 1 or nick == "tehsrvr": #that one is permenantly reserved for server use
         return 1
     for usedname in nicklist:
         if nick == usedname:
@@ -45,7 +45,7 @@ def sendmessage(text, nick):
     global outmessagetext, outmessageid
     if not nickregistered(nick) and nick != "tehsrvr":
         thread.exit_thread()
-    if not text.startswith('!') and not nick == 'tehsrvr': #no timestamp on server commands (disabled)
+    if not (text.startswith('!') and nick == 'tehsrvr'): #no timestamp on server commands
         stamp = time.localtime()
         asciistamp = "%d:%d" % (stamp.tm_hour, stamp.tm_min)
         if stamp.tm_min < 10: asciistamp = string.replace(asciistamp, ':', ':0')
@@ -61,14 +61,13 @@ def sendloop(c, nick):
         if outmessageid != lastmessageid:
             try:
                 c.send(outmessagetext)
-            except:
-                "ERROR IN SEND LOOP\n%s: %s" % (nick, sys.exc_info()[1])
+            except: #the client is no longer available
+                return
             lastmessageid = outmessageid
         else:
             time.sleep(0.01)
 
 def getnick(c):
-    c.send("!SENDNICK")
     nick = c.recv(1024)
     if len(nick) > 10:
         nick = nick[:9]
@@ -79,18 +78,16 @@ def clientthread(c, ip):
     try:
         nick = getnick(c)
     except:
-        print '%s disappeared %s' % (ip, sys.exc_info()[1])
+        print '%s disappeared: %s' % (ip, sys.exc_info()[1])
         return
     if registernick(nick) > 0: #if the nick is used
-        c.send("!NOTE Nickname in use.")
+        c.send("!NOTE Nickname not valid.")
         c.send("!TERMINATE")
         c.close()
         return
     print "%s is now known as %s" % (ip, nick)
     c.send("!CHATMODE")
     thread.start_new_thread(sendloop, (c, nick))
-    time.sleep(0.1)
-    sendmessage("%s joined!" % nick, 'tehsrvr')
     time.sleep(0.1)
     c.send('!NOTE Current users are: ' + string.join(userlist(), ', '))
     while 1: #recv loop. spends most of time on c.recv()
@@ -128,8 +125,10 @@ def main():
 try:
     main()
 except:
+    sendmessage("Server exit...", 'tehsrvr')
+    time.sleep(1)
     sendmessage("!TERMINATE", 'tehsrvr')
-    time.sleep(3)
+    time.sleep(2)
     sock.close()
     print sys.exc_info()
 
