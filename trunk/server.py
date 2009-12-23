@@ -1,4 +1,5 @@
 import socket, thread, sys, time, string
+from messageboard import postmessage, countmessages, listmessages, readmessage, delmessage
 
 global outmessagetext, outmessageid, time
 
@@ -74,6 +75,13 @@ def getnick(c):
         c.send("!NOTE Nickname truncated to %s" % nick)
     return nick
 
+def welcome(c):
+    time.sleep(0.1)
+    c.send('!NOTE Current users are: ' + string.join(userlist(), ', '))
+    messages = countmessages()
+    if messages:
+        c.send('!NOTE There are %d saved messages!!!' % messages)
+
 def clientthread(c, ip):
     try:
         nick = getnick(c)
@@ -89,8 +97,7 @@ def clientthread(c, ip):
     sendmessage("%s joined!" % nick, 'tehsrvr')
     c.send("!CHATMODE")
     thread.start_new_thread(sendloop, (c, nick))
-    time.sleep(0.1)
-    c.send('!NOTE Current users are: ' + string.join(userlist(), ', '))
+    welcome(c)
     while 1: #recv loop. spends most of time on c.recv()
         try:
             message = c.recv(1000)
@@ -101,18 +108,46 @@ def clientthread(c, ip):
             freenick(nick)
             break
         message = message.strip("\xaa")
-        if message[:4] == "/me ":
+        if message.startswith("/me "):
             message = string.replace(message, "/me ", "")
             sendmessage(" * %s %s" % (nick,message), nick)
-        elif message[:5] == '/list':
+        elif message == '/list':
             c.send('!NOTE Current users: ' + string.join(userlist(), ', '))
-        elif message[:5] == '/nick':
+        elif message.startswith('/nick '):
             oldnick = nick
             nick = string.split(message)[1]
             changenick(oldnick, nick)
             sendmessage(' The user %s is now known as %s' % (oldnick, nick), 'tehsrvr')
-        elif message[:5] == '/exit':
+        elif message == '/exit':
             c.send('!TERMINATE')
+        #messageboard commands
+        elif message == '/msglist':
+            c.send('!NOTE Messages: '+listmessages())
+        elif message.startswith('/msgpost '):
+            try:
+                wordlist = string.split(message)
+                title = wordlist[1]
+                print title
+                text = string.join(wordlist[2:])
+            except:
+                print sys.exc_info()[1]
+                c.send('!NOTE Error parsing request: '+sys.exc_info()[1])
+                continue
+            c.send("!NOTE "+postmessage(title, text))
+        elif message.startswith('/msgread '):
+            try:
+                title = string.split(message)[1]
+            except IndexError:
+                c.send('!NOTE Missing argument!')
+                continue
+            c.send("!NOTE "+readmessage(title))
+        elif message.startswith('/msgdel '):
+            try:
+                title = string.split(message)[1]
+            except IndexError:
+                c.send('!NOTE Missing argument!')
+                continue
+            c.send("!NOTE "+delmessage(title))
         else:
             sendmessage("<%s> %s" % (nick, message), nick)
 
