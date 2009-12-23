@@ -38,7 +38,7 @@ def callbacks(outfunc, infunc, killfunc):
     try:
         s.connect((IP, 59387))
     except:
-        outfunc("Could not connect to server: " + sys.exc_info()[1])
+        outfunc("Could not connect to server: " + str(sys.exc_info()[1]))
         killfunc()
     outfunc("Server found.")
     s.send(nick)
