@@ -1,7 +1,7 @@
 import socket, thread, sys, time, string
 from messageboard import postmessage, countmessages, listmessages, readmessage, delmessage
 
-global outmessagetext, outmessageid, time
+global outmessagetext, outmessageid
 
 port = 59387
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -86,7 +86,7 @@ def clientthread(c, ip):
     try:
         nick = getnick(c)
     except:
-        print '%s disappeared: %s' % (ip, sys.exc_info()[1])
+        print '%s disappeared: %s' % (ip, str(sys.exc_info()[1]))
         return
     if registernick(nick) > 0: #if the nick is used
         c.send("!NOTE Nickname not valid.")
@@ -104,7 +104,7 @@ def clientthread(c, ip):
             if len(message) == 0: #client should not send empty messages
                 raise IOError, "Client exit."
         except:
-            sendmessage("%s quit: %s" % (nick, sys.exc_info()[1]), "tehsrvr")
+            sendmessage("%s quit: %s" % (nick, str(sys.exc_info()[1])), "tehsrvr")
             freenick(nick)
             break
         message = message.strip("\xaa")
@@ -131,7 +131,7 @@ def clientthread(c, ip):
                 text = string.join(wordlist[2:])
             except:
                 print sys.exc_info()[1]
-                c.send('!NOTE Error parsing request: '+sys.exc_info()[1])
+                c.send('!NOTE Error parsing request: '+str(sys.exc_info()[1]))
                 continue
             c.send("!NOTE "+postmessage(title, text))
         elif message.startswith('/msgread '):
