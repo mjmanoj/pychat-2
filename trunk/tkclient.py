@@ -6,10 +6,13 @@ class App:
 
         root.resizable(width=FALSE, height=FALSE)
 
-        frame = Frame(master, bg= "#1C5FBA")
+        self.primary =      "#1C5FBA" #logo yellow
+        self.secondary =    "#F1E300" #logo blue
+
+        frame = Frame(master, bg= self.primary)
         frame.pack()
 
-        self.box = ScrolledText.ScrolledText(frame, wrap=WORD, width = 80, relief = GROOVE)
+        self.box = ScrolledText.ScrolledText(frame, wrap=WORD, width = 80, relief = GROOVE, bg= self.primary, fg = self.secondary)
         self.box.insert(END, 'Welcome to PyChat 2!')
         self.box.config(state=DISABLED)
         self.box.pack(side=TOP)
@@ -19,14 +22,14 @@ class App:
 
         self.texvar = StringVar()
         self.texvar.set("")
-        self.label = Label(entryframe, textvariable=self.texvar, bg= "#1C5FBA", fg = "#F1E300")
+        self.label = Label(entryframe, textvariable=self.texvar, bg = self.primary, fg = self.secondary)
         self.label.pack(side=LEFT)
 
-        self.entry = Entry(entryframe, width = 60)
+        self.entry = Entry(entryframe, width = 50, bg= self.primary, fg = self.secondary)
         self.entry.bind("<Return>", self.gettext)
         self.entry.pack(side=LEFT)
 
-        self.quitter = Button(frame, relief = RIDGE, text = "Quit", fg = "#F1E300", bg = "#1C5FBA", command = self.quitbutton, state = DISABLED)
+        self.quitter = Button(frame, relief = RIDGE, text = "Quit", fg = self.secondary, bg = self.primary, command = self.quitbutton, state = DISABLED)
         self.quitter.pack(side=RIGHT)
 
         entryframe.pack(side=LEFT)
@@ -45,8 +48,7 @@ class App:
     def quitbutton(self):
         self.buffer = "/exit"
         self.bufferfull = True
-        
-        
+
     def gettext(self, e):
         text = self.entry.get()
         self.entry.delete(0, END)
@@ -67,9 +69,10 @@ class App:
                 return text
             else:
                 time.sleep(0.01)
-    
+
     def close(self):
         root.quit()
+
 root = Tk()
 
 app = App(root)

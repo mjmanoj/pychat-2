@@ -1,4 +1,4 @@
-import socket, thread, string, sys
+import socket, thread, string, sys, time
 
 try:
     #if you want to use a server other than localhost, add a file
@@ -9,12 +9,36 @@ except:
     #if there is no serverinfo.py file, just use localhost
     IP = 'localhost'
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
- 
-def inputthread(s, infunc):
+global buffertext, bufferfull
+bufferfull = 0
+buffertext = ''
+
+def inputthread(infunc):
+    global bufferfull, buffertext
     while 1:
-        s.send("\xaa" + infunc())
- 
+        localbuf = infunc()
+        if not bufferfull:
+            buffertext = localbuf
+            bufferfull = 1
+        else:
+            time.sleep(0.01)
+
+global socketclosed
+socketclosed = 0
+
+def sendthread(s):
+    global bufferfull, buffertext, socketclosed
+    while 1:
+        if bufferfull:
+            s.send("\xaa" + buffertext)
+            buffertext = ''
+            bufferfull = 0
+        else:
+            time.sleep(0.01)
+            if socketclosed:
+                s.close()
+                return
+
 def netmanager(s, outfunc, infunc, killfunc):
     while 1:
         command = s.recv(1024)
@@ -24,17 +48,21 @@ def netmanager(s, outfunc, infunc, killfunc):
             outfunc(command)
         elif command.startswith("!CHATMODE"):
             outfunc("Nickname accepted, entering chat mode.")
-            thread.start_new_thread(inputthread, (s, infunc))
+            thread.start_new_thread(sendthread, tuple([s]))
+            thread.start_new_thread(inputthread, tuple([infunc]))
         elif command.startswith("!NOTE"):
             outfunc(string.replace(command, "!NOTE ", "Server: "))
         elif command.startswith("!TERMINATE"):
             outfunc("Client terminated.")
             s.close()
+            socketclosed = 1
             killfunc()
- 
+            return
+
 def callbacks(outfunc, infunc, killfunc):
     nick = (infunc("Enter nickname: "))
     outfunc("Connecting...")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.connect((IP, 59387))
     except:
