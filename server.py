@@ -161,7 +161,7 @@ def main():
 try:
     main()
 except:
-    sendmessage("Server exit...", 'tehsrvr')
+    sendmessage("Server exit, disconnecting all clients...", 'tehsrvr')
     time.sleep(1)
     sendmessage("!TERMINATE", 'tehsrvr')
     time.sleep(2)
