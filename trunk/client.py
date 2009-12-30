@@ -40,6 +40,7 @@ def sendthread(s):
                 return
 
 def netmanager(s, outfunc, infunc, killfunc):
+    global socketclosed
     while 1:
         command = s.recv(1024)
         if len(command) == 0:

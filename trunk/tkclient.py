@@ -71,6 +71,7 @@ class App:
                 time.sleep(0.01)
 
     def close(self):
+        self.printtex('You have been disconnected from the server.')
         root.quit()
 
 root = Tk()
