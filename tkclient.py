@@ -1,6 +1,16 @@
 from Tkinter import *
 import client, thread, time, ScrolledText
 
+class CloseNote:
+    def __init__(self, parent):
+        top = self.top = Toplevel(parent)
+        Label(top, text='You have been disconnected from the server.').pack()
+        b = Button(top, text="OK", command=self.ok)
+        b.pack(pady=5)
+
+    def ok(self):
+        self.top.destroy()
+
 class App:
     def __init__(self, master):
 
@@ -46,8 +56,7 @@ class App:
         self.box.yview_scroll(1,"units")
 
     def quitbutton(self):
-        self.buffer = "/exit"
-        self.bufferfull = True
+        root.quit()
 
     def gettext(self, e):
         text = self.entry.get()
@@ -71,7 +80,8 @@ class App:
                 time.sleep(0.01)
 
     def close(self):
-        self.printtex('You have been disconnected from the server.')
+        dialog = CloseNote(root)
+        root.wait_window(dialog.top)
         root.quit()
 
 root = Tk()
