@@ -1,5 +1,6 @@
 import socket, thread, sys, time, string
 from messageboard import postmessage, countmessages, listmessages, readmessage, delmessage
+from namekeeper import registernick, freenick, changenick, nickregistered, nicklist
 
 global outmessagetext, outmessageid
 
@@ -7,38 +8,6 @@ port = 59387
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(('', port))
 sock.listen(5) #listen for up to 5 new incoming requests at the same moment
-
-nicklist = []
-def registernick(nick):
-    collision = 0
-    if len(nick) < 1 or nick == "tehsrvr": #that one is permenantly reserved for server use
-        return 1
-    for usedname in nicklist:
-        if nick == usedname:
-            collision = 1
-    if collision:
-        return 1
-    else:
-        nicklist.append(nick)
-        return 0
-
-def freenick(nick):
-    nicklist.remove(nick)
-    return
-
-def changenick(old, new):
-    nicklist.remove(old)
-    nicklist.append(new)
-
-def nickregistered(nick):
-    collision = 0
-    for usedname in nicklist:
-        if nick == usedname:
-            collision = 1
-    return collision
-
-def userlist():
-    return nicklist
 
 outmessagetext = ''
 outmessageid = -1
@@ -77,7 +46,7 @@ def getnick(c):
 
 def welcome(c):
     time.sleep(0.1)
-    c.send('!NOTE Current users are: ' + string.join(userlist(), ', '))
+    c.send('!NOTE Current users are: ' + string.join(nicklist(), ', '))
     messages = countmessages()
     if messages:
         c.send('!NOTE There are %d saved messages!!!' % messages)
@@ -86,7 +55,7 @@ def clientthread(c, ip):
     try:
         nick = getnick(c)
     except:
-        print '%s disappeared: %s' % (ip, str(sys.exc_info()[1]))
+        print '%s getnick failed: %s' % (ip, str(sys.exc_info()[1]))
         return
     if registernick(nick) > 0: #if the nick is used
         c.send("!NOTE Nickname not valid.")
@@ -112,7 +81,7 @@ def clientthread(c, ip):
             message = string.replace(message, "/me ", "")
             sendmessage(" * %s %s" % (nick,message), nick)
         elif message == '/list':
-            c.send('!NOTE Current users: ' + string.join(userlist(), ', '))
+            c.send('!NOTE Current users: ' + string.join(nicklist(), ', '))
         elif message.startswith('/nick '):
             oldnick = nick
             nick = string.split(message)[1]
