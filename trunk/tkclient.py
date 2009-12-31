@@ -39,7 +39,7 @@ class App:
         self.entry.bind("<Return>", self.gettext)
         self.entry.pack(side=LEFT)
 
-        self.quitter = Button(frame, relief = RIDGE, text = "Quit", fg = self.secondary, bg = self.primary, command = self.quitbutton, state = DISABLED)
+        self.quitter = Button(frame, relief = RAISED, text = "Quit", fg = self.secondary, bg = self.primary, command = self.quitbutton)
         self.quitter.pack(side=RIGHT)
 
         entryframe.pack(side=LEFT)
@@ -69,7 +69,6 @@ class App:
             self.texvar.set(prompt)
         else:
             self.texvar.set("Say:")
-            self.quitter.config(state = NORMAL, relief = RAISED)
         while 1:
             if self.bufferfull:
                 self.bufferfull = False
