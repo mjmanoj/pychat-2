@@ -127,11 +127,9 @@ def clientthread(c, ip):
             try:
                 wordlist = string.split(message)
                 title = wordlist[1]
-                print title
                 text = string.join(wordlist[2:])
             except:
-                print sys.exc_info()[1]
-                c.send('!NOTE Error parsing request: '+str(sys.exc_info()[1]))
+                c.send('!NOTE Error parsing request: '+str(sys.exc_info()[1])+'\nYou might want to report this to the server operator.')
                 continue
             c.send("!NOTE "+postmessage(title, text))
         elif message.startswith('/msgread '):
@@ -161,10 +159,10 @@ def main():
 try:
     main()
 except:
+    sock.close()
     sendmessage("Server exit, disconnecting all clients...", 'tehsrvr')
     time.sleep(1)
     sendmessage("!TERMINATE", 'tehsrvr')
     time.sleep(2)
-    sock.close()
     print sys.exc_info()
 

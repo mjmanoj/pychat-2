@@ -13,18 +13,19 @@ global buffertext, bufferfull
 bufferfull = 0
 buffertext = ''
 
-def inputthread(infunc):
-    global bufferfull, buffertext
-    while 1:
-        localbuf = infunc()
-        if not bufferfull:
-            buffertext = localbuf
-            bufferfull = 1
-        else:
-            time.sleep(0.01)
-
 global socketclosed
 socketclosed = 0
+
+def inputthread(infunc):
+    global bufferfull, buffertext, socketclosed
+    while 1:
+        if socketclosed: return
+        localbuf = infunc()
+        while bufferfull:
+            time.sleep(0.01) #wait until the buffer is empty
+            if socketclosed: return
+        buffertext = localbuf
+        bufferfull = 1
 
 def sendthread(s):
     global bufferfull, buffertext, socketclosed
@@ -60,7 +61,7 @@ def netmanager(s, outfunc, infunc, killfunc):
             killfunc()
             return
 
-def callbacks(outfunc, infunc, killfunc):
+def callbacks(outfunc, infunc, killfunc, server=IP):
     nick = (infunc("Enter nickname: "))
     outfunc("Connecting...")
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -74,7 +75,7 @@ def callbacks(outfunc, infunc, killfunc):
     netmanager(s, outfunc, infunc, killfunc)
 
 def main():
-    def printfunc(text): print text #print is not a function
+    def printfunc(text): print text #print is not a function in 2.5 and earlier
     callbacks(printfunc, raw_input, exit)
 
 if __name__ == '__main__':
