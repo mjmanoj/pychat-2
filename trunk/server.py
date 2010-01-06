@@ -1,6 +1,6 @@
 import socket, thread, sys, time, string
 from messageboard import postmessage, countmessages, listmessages, readmessage, delmessage
-from namekeeper import register, free, change, registered, getlist
+from namekeeper import registernick, freenick, changenick, nickregistered, nicklist
 
 global outmessagetext, outmessageid
 
