@@ -1,5 +1,5 @@
 namelist = []
-def register(nick):
+def registernick(nick):
     collision = 0
     if len(nick) < 1 or nick == "tehsrvr": #that one is permenantly reserved for server use
         return 1
@@ -12,21 +12,21 @@ def register(nick):
         namelist.append(nick)
         return 0
 
-def free(nick):
+def freenick(nick):
     namelist.remove(nick)
     return
 
-def change(old, new):
+def changenick(old, new):
     namelist.remove(old)
     namelist.append(new)
 
-def registered(nick):
+def nickregistered(nick):
     collision = 0
     for usedname in namelist:
         if nick == usedname:
             collision = 1
     return collision
 
-def getlist():
+def nicklist():
     return namelist
  
