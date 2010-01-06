@@ -1,8 +1,23 @@
-import socket, thread, sys, time, string
+import socket, thread, sys, os, time, string, pickle
 from messageboard import postmessage, countmessages, listmessages, readmessage, delmessage
 from namekeeper import registernick, freenick, changenick, nickregistered, nicklist
+from rsa import *
 
-global outmessagetext, outmessageid
+global outmessagetext, outmessageid, pubkey, privkey
+
+#load keys, generate pair if none exist
+try:
+    os.listdir('.').index('skey')
+    os.listdir('skey')
+    privkey = pickle.load(open('skey/private.bin', 'r'))
+    pubkey = pickle.load(open('skey/public.bin', 'r'))
+except (IOError, ValueError):
+    print "Generating keypair, this will take several minutes..."
+    pubkey, privkey = gen_pubpriv_keys(2048)
+    print "Done, saving to files."
+    os.mkdir('skey')
+    pickle.dump(privkey, open('skey/private.bin', 'w'))
+    pickle.dump(pubkey, open('skey/public.bin', 'w'))
 
 port = 59387
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -24,13 +39,13 @@ def sendmessage(text, nick):
     outmessagetext = text
     outmessageid = outmessageid + 1
 
-def sendloop(c, nick):
+def sendloop(c, nick, ckey):
     global outmessagetext, outmessageid
     lastmessageid = outmessageid
     while 1:
         if outmessageid != lastmessageid:
             try:
-                c.send(outmessagetext)
+                c.send(encrypt(outmessagetext, ckey))
             except: #the client is no longer available
                 return
             lastmessageid = outmessageid
@@ -44,6 +59,14 @@ def getnick(c):
         c.send("!NOTE Nickname truncated to %s" % nick)
     return nick
 
+def getkey(c):
+    global pubkey
+    print "!SENDKEY"+pickle.dumps(pubkey)
+    c.send("!SENDKEY"+pickle.dumps(pubkey))
+    rawkey = c.recv(2048)
+    key = pickle.loads(rawkey)
+    return key
+
 def welcome(c):
     time.sleep(0.1)
     c.send('!NOTE Current users are: ' + string.join(nicklist(), ', '))
@@ -52,6 +75,7 @@ def welcome(c):
         c.send('!NOTE There are %d saved messages!!!' % messages)
 
 def clientthread(c, ip):
+    global privkey
     try:
         nick = getnick(c)
     except:
@@ -62,21 +86,26 @@ def clientthread(c, ip):
         c.send("!TERMINATE")
         c.close()
         return
+    try:
+        ckey = getkey(c)
+    except:
+        print '%s getkey failed: %s' % (nick, str(sys.exc_info()[1]))
+        return
     print "%s logged in as %s" % (ip, nick)
     sendmessage("%s joined!" % nick, 'tehsrvr')
     c.send("!CHATMODE")
-    thread.start_new_thread(sendloop, (c, nick))
+    thread.start_new_thread(sendloop, (c, nick, ckey))
     welcome(c)
     while 1: #recv loop. spends most of time on c.recv()
         try:
-            message = c.recv(1000)
+            message = c.recv(1024)
             if len(message) == 0: #client should not send empty messages
                 raise IOError, "Client exit."
         except:
             sendmessage("%s quit: %s" % (nick, str(sys.exc_info()[1])), "tehsrvr")
             freenick(nick)
             break
-        message = message.strip("\xaa")
+        message = decrypt(message[1:], privkey)
         if message.startswith("/me "):
             message = string.replace(message, "/me ", "")
             sendmessage(" * %s %s" % (nick,message), nick)

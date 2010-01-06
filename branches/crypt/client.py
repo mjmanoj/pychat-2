@@ -1,4 +1,5 @@
-import socket, thread, string, sys, time
+import socket, thread, string, sys, time, pickle, os
+from rsa import *
 
 try:
     #if you want to use a server other than localhost, add a file
@@ -9,7 +10,22 @@ except:
     #if there is no serverinfo.py file, just use localhost
     IP = 'localhost'
 
-global buffertext, bufferfull
+global buffertext, bufferfull, srvkey, pubkey, privkey
+
+#load keys, generate pair if none exist
+try:
+    os.listdir('.').index('ckey')
+    os.listdir('ckey')
+    privkey = pickle.load(open('ckey/private.bin', 'r'))
+    pubkey = pickle.load(open('ckey/public.bin', 'r'))
+except (IOError, ValueError):
+    print "Generating keypair, this will take several minutes..."
+    pubkey, privkey = gen_pubpriv_keys(2048)
+    print "Done, saving to files."
+    os.mkdir('ckey')
+    pickle.dump(privkey, open('ckey/private.bin', 'w'))
+    pickle.dump(pubkey, open('ckey/public.bin', 'w'))
+
 bufferfull = 0
 buffertext = ''
 
@@ -28,10 +44,10 @@ def inputthread(infunc):
         bufferfull = 1
 
 def sendthread(s):
-    global bufferfull, buffertext, socketclosed
+    global bufferfull, buffertext, socketclosed, srvkey
     while 1:
         if bufferfull:
-            s.send("\xaa" + buffertext)
+            s.send("\xaa" + encrypt(buffertext, srvkey))
             buffertext = ''
             bufferfull = 0
         else:
@@ -41,13 +57,17 @@ def sendthread(s):
                 return
 
 def netmanager(s, outfunc, infunc, killfunc):
-    global socketclosed
+    global socketclosed, srvkey, pubkey, privkey
     while 1:
-        command = s.recv(1024)
+        command = s.recv(2048)
         if len(command) == 0:
             command = '!TERMINATE'
         if not command.startswith("!"):
-            outfunc(command)
+            outfunc(decrypt(command, privkey))
+        elif command.startswith("!SENDKEY"):
+            print command
+            s.send(pickle.dumps(pubkey))
+            srvkey = pickle.loads(command[8:])
         elif command.startswith("!CHATMODE"):
             outfunc("Nickname accepted, entering chat mode.")
             thread.start_new_thread(sendthread, tuple([s]))
