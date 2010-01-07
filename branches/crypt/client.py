@@ -1,5 +1,5 @@
-import socket, thread, string, sys, time, pickle, os
-from rsa import *
+import socket, thread, string, sys, time, random
+from blowfish import *
 
 try:
     #if you want to use a server other than localhost, add a file
@@ -10,21 +10,7 @@ except:
     #if there is no serverinfo.py file, just use localhost
     IP = 'localhost'
 
-global buffertext, bufferfull, srvkey, pubkey, privkey
-
-#load keys, generate pair if none exist
-try:
-    os.listdir('.').index('ckey')
-    os.listdir('ckey')
-    privkey = pickle.load(open('ckey/private.bin', 'r'))
-    pubkey = pickle.load(open('ckey/public.bin', 'r'))
-except (IOError, ValueError):
-    print "Generating keypair, this will take several minutes..."
-    pubkey, privkey = gen_pubpriv_keys(2048)
-    print "Done, saving to files."
-    os.mkdir('ckey')
-    pickle.dump(privkey, open('ckey/private.bin', 'w'))
-    pickle.dump(pubkey, open('ckey/public.bin', 'w'))
+global buffertext, bufferfull
 
 bufferfull = 0
 buffertext = ''
@@ -43,11 +29,11 @@ def inputthread(infunc):
         buffertext = localbuf
         bufferfull = 1
 
-def sendthread(s):
-    global bufferfull, buffertext, socketclosed, srvkey
+def sendthread(s, key):
+    global bufferfull, buffertext, socketclosed
     while 1:
         if bufferfull:
-            s.send("\xaa" + encrypt(buffertext, srvkey))
+            s.send("\xaa" + key.encryptCTR(buffertext))
             buffertext = ''
             bufferfull = 0
         else:
@@ -57,20 +43,24 @@ def sendthread(s):
                 return
 
 def netmanager(s, outfunc, infunc, killfunc):
-    global socketclosed, srvkey, pubkey, privkey
+    global socketclosed
     while 1:
-        command = s.recv(2048)
+        command = s.recv(1024)
         if len(command) == 0:
             command = '!TERMINATE'
         if not command.startswith("!"):
-            outfunc(decrypt(command, privkey))
+            outfunc(key.decryptCTR(command))
         elif command.startswith("!SENDKEY"):
-            print command
-            s.send(pickle.dumps(pubkey))
-            srvkey = pickle.loads(command[8:])
+            p, g = [int(i) for i in string.split(command)[1:3]]
+            b = random.randint(10, p/5)
+            k = (g**b)%p
+            s.send(str(k))
+            j = int(s.recv(1024))
+            key = Blowfish(bin((j**b)%p))
+            key.initCTR()
         elif command.startswith("!CHATMODE"):
             outfunc("Nickname accepted, entering chat mode.")
-            thread.start_new_thread(sendthread, tuple([s]))
+            thread.start_new_thread(sendthread, (s, key))
             thread.start_new_thread(inputthread, tuple([infunc]))
         elif command.startswith("!NOTE"):
             outfunc(string.replace(command, "!NOTE ", "Server: "))

@@ -1,23 +1,21 @@
-import socket, thread, sys, os, time, string, pickle
+import socket, thread, sys, os, time, string, pickle, random
 from messageboard import postmessage, countmessages, listmessages, readmessage, delmessage
 from namekeeper import registernick, freenick, changenick, nickregistered, nicklist
-from rsa import *
+from blowfish import *
 
-global outmessagetext, outmessageid, pubkey, privkey
-
-#load keys, generate pair if none exist
-try:
-    os.listdir('.').index('skey')
-    os.listdir('skey')
-    privkey = pickle.load(open('skey/private.bin', 'r'))
-    pubkey = pickle.load(open('skey/public.bin', 'r'))
-except (IOError, ValueError):
-    print "Generating keypair, this will take several minutes..."
-    pubkey, privkey = gen_pubpriv_keys(2048)
-    print "Done, saving to files."
-    os.mkdir('skey')
-    pickle.dump(privkey, open('skey/private.bin', 'w'))
-    pickle.dump(pubkey, open('skey/public.bin', 'w'))
+global outmessagetext, outmessageid, pubints
+pubints = []
+found = False
+while not found: #this loop finds a large prime number (needs cleaup!)
+    candidate = random.randint(100, 11**6) #last one is the approx. key strength. anything larger than 10**7 takes a while.
+    found = True
+    for i in xrange(2, candidate/2-1):
+        r = candidate/float(i)
+        if not round(r, 0) != r:
+            found = False
+            break
+pubints.append(candidate)
+pubints.append(random.randint(10, pubints[0]/5)) #should be significantly less than p
 
 port = 59387
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,7 +43,7 @@ def sendloop(c, nick, ckey):
     while 1:
         if outmessageid != lastmessageid:
             try:
-                c.send(encrypt(outmessagetext, ckey))
+                c.send(ckey.encryptCTR(outmessagetext))
             except: #the client is no longer available
                 return
             lastmessageid = outmessageid
@@ -60,12 +58,18 @@ def getnick(c):
     return nick
 
 def getkey(c):
-    global pubkey
-    print "!SENDKEY"+pickle.dumps(pubkey)
-    c.send("!SENDKEY"+pickle.dumps(pubkey))
-    rawkey = c.recv(2048)
-    key = pickle.loads(rawkey)
-    return key
+    global pubints
+    print pubints
+    p, g = pubints
+    c.send("!SENDKEY "+str(p)+' '+str(g))
+    a = random.randint(10, p/5)
+    j = (g**a)%p
+    c.send(str(j))
+    k = int(c.recv(1024))
+    key = (k**a)%p
+    cipher = Blowfish(bin(key))
+    cipher.initCTR()
+    return cipher
 
 def welcome(c):
     time.sleep(0.1)
@@ -81,15 +85,15 @@ def clientthread(c, ip):
     except:
         print '%s getnick failed: %s' % (ip, str(sys.exc_info()[1]))
         return
+    try:
+        ckey = getkey(c)
+    except:
+        print '%s getkey failed: %s' % (ip, str(sys.exc_info()[1]))
+        return
     if registernick(nick) > 0: #if the nick is used
         c.send("!NOTE Nickname not valid.")
         c.send("!TERMINATE")
         c.close()
-        return
-    try:
-        ckey = getkey(c)
-    except:
-        print '%s getkey failed: %s' % (nick, str(sys.exc_info()[1]))
         return
     print "%s logged in as %s" % (ip, nick)
     sendmessage("%s joined!" % nick, 'tehsrvr')
@@ -105,7 +109,7 @@ def clientthread(c, ip):
             sendmessage("%s quit: %s" % (nick, str(sys.exc_info()[1])), "tehsrvr")
             freenick(nick)
             break
-        message = decrypt(message[1:], privkey)
+        message = ckey.decryptCTR(message[1:])
         if message.startswith("/me "):
             message = string.replace(message, "/me ", "")
             sendmessage(" * %s %s" % (nick,message), nick)
