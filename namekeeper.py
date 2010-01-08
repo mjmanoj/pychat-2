@@ -17,6 +17,7 @@ def freenick(nick):
     return
 
 def changenick(old, new):
+    if nickregistered(new): return 1
     namelist.remove(old)
     namelist.append(new)
 
