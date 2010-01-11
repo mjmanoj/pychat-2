@@ -1,9 +1,31 @@
-import socket, sys, time, string
+import socket, sys, time, string, ssl
 from clienthandler import client
 
-global clientlist
-clientlist = []
+#load settings
+#see client.py for how to imterperet the following lines
+try:    from serverconf import forceencryption
+except: forceencryption = False
+try:    from serverconf import certfile
+except: certfile = 'cert.pem'
 
+#find out if tls/ssl can be used
+encryptable = True
+try:
+    import ssl
+except:
+    if forceencryption:
+        print 'Warning: not using secure connections becuase ssl is not supported.'
+    encryptable = False
+try:
+    open(certfile, 'r').read(1)
+except:
+    if forceencryption:
+        print 'Warning: not using secure connections becuase certfile not accessable.'
+    encryptable = False
+
+cryptinfo = (encryptable, forceencryption, certfile)
+
+clientlist = []
 port = 59387
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(('', port))
@@ -20,10 +42,7 @@ def timestamp(text):
     return text
 
 def clientsend(client, text):
-    try:
-        client.send(text)
-    except:
-        print 'Removing client from list: ' + client.nick
+    if client.send(text):
         clientlist.remove(client)
 
 def sendmessage(text, nick):
@@ -55,8 +74,8 @@ def main():
     print "Accepting clients from port %d" % port
     while 1:
         c, info = sock.accept()
-        print "Forking for connection request from %s." % info[0]
-        clientlist.append(client(c, info[0], sendmessage, sendto))
+        print "Handling connection request from %s." % info[0]
+        clientlist.append(client(c, info[0], sendmessage, sendto, cryptinfo))
 
 try:
     main()
