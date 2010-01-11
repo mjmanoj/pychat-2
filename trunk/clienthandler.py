@@ -3,11 +3,13 @@ from namekeeper import registernick, freenick, changenick, nickregistered, nickl
 import thread, string, sys, time
 
 class client():
-    def __init__(self, c, ip, bcast, monocast):
+    def __init__(self, c, ip, bcast, monocast, cryptinfo):
         self.c = c
         self.ip = ip
         self.bcast = bcast
         self.monocast = monocast
+        self.closed = False
+        self.cryptable, self.cryptdefault, self.certfile = cryptinfo
         thread.start_new_thread(self.mainthread, tuple([]))
 
     def __del__(self):
@@ -15,20 +17,39 @@ class client():
 
     #socket wrapping functions (could possibly add encryption here?)
     def send(self, text):
+        if self.closed: return
         try:
             self.c.send(text)
         except: #sending didn't work
-            raise IOError, "Client %s no longer available" % self.nick
+            print "Client %s no longer available" % self.nick
+            self.close()
+            return 1
 
     def recv(self):
+        if self.closed: return
         data = self.c.recv(4096)
         if len(data) == 0: #client should not send empty messages
+            self.close()
             raise IOError, "Client quit (connection interrupted)."
         data = data.strip("\xaa")
         return data
 
+    def secure(self): #converts self.c into a secure TLS socket if possible
+        import ssl
+        self.c.send('go')
+        if self.c.recv(1024) != 'now':
+            raise IOError, "Pre-wrapping sanity check failed."
+        self.c = ssl.wrap_socket(self.c, server_side=True, certfile=self.certfile, ssl_version=ssl.PROTOCOL_TLSv1)
+        self.c.send('it works?')
+        if self.c.recv(1024) != 'heard you!':
+            raise IOError, "Post-wrapping sanity check failed."
+        self.c.send('completed with success.')
+        return
+
     def close(self):
+        if self.closed: return
         self.c.close()
+        self.closed = True
         return
 
     #general functions
@@ -48,6 +69,17 @@ class client():
 
     #the "main" function
     def mainthread(self):
+        try:
+            wantsencryption = int(self.recv())
+            if self.cryptable and (wantsencryption or self.cryptdefault): #if encryption is possible and the client or the server wants encryption:
+                self.send('1')
+                self.secure()
+                print 'Using secure connection with %s' % self.ip
+            else:
+                self.send('0')
+        except:
+            print 'Securing connection with %s failed: %s' % (self.ip, str(sys.exc_info()[1]))
+            return
         try:
             tmpnick = self.getnick()
         except:
