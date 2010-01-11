@@ -19,8 +19,15 @@ except:
 try:
     open(certfile, 'r').read(1)
 except:
-    if forceencryption:
+    if forceencryption and encryptable == True: #only print one message
         print 'Warning: not using secure connections becuase certfile not accessable.'
+    encryptable = False
+try:
+    ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), server_side=True, certfile=certfile, ssl_version=ssl.PROTOCOL_TLSv1)
+except:
+    print sys.exc_info()
+    if forceencryption and encryptable == True: #only print one message
+        print 'Warning: not using secure connections becuase certfile not usable.'
     encryptable = False
 
 cryptinfo = (encryptable, forceencryption, certfile)
