@@ -3,19 +3,19 @@ from namekeeper import registernick, freenick, changenick, nickregistered, nickl
 import thread, string, sys, time
 
 class client():
-    def __init__(self, c, ip, bcast, monocast, cryptinfo):
+    def __init__(self, c, ip, bcast, monocast, serverconf):
+        global config
+        config = serverconf
         self.c = c
         self.ip = ip
         self.bcast = bcast
         self.monocast = monocast
         self.closed = False
-        self.cryptable, self.cryptdefault, self.certfile = cryptinfo
         thread.start_new_thread(self.mainthread, tuple([]))
 
     def __del__(self):
         self.close()
 
-    #socket wrapping functions (could possibly add encryption here?)
     def send(self, text):
         if self.closed: return
         try:
@@ -39,7 +39,7 @@ class client():
         self.c.send('go')
         if self.c.recv(1024) != 'now':
             raise IOError, "Pre-wrapping sanity check failed."
-        self.c = ssl.wrap_socket(self.c, server_side=True, certfile=self.certfile, ssl_version=ssl.PROTOCOL_TLSv1)
+        self.c = ssl.wrap_socket(self.c, server_side=True, certfile=config.certfile, ssl_version=ssl.PROTOCOL_TLSv1)
         self.c.send('it works?')
         if self.c.recv(1024) != 'heard you!':
             raise IOError, "Post-wrapping sanity check failed."
@@ -71,7 +71,7 @@ class client():
     def mainthread(self):
         try:
             wantsencryption = int(self.recv())
-            if self.cryptable and (wantsencryption or self.cryptdefault): #if encryption is possible and the client or the server wants encryption:
+            if (config.sslavailable and config.goodcert) and (wantsencryption or config.forceencryption): #if encryption is possible and the client or the server wants encryption:
                 self.send('1')
                 self.secure()
                 print 'Using secure connection with %s' % self.ip

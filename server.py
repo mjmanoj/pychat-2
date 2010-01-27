@@ -1,36 +1,8 @@
 import socket, sys, time, string, ssl
 from clienthandler import client
-
-#load settings
-#see client.py for how to imterperet the following lines
-try:    from serverconf import forceencryption
-except: forceencryption = False
-try:    from serverconf import certfile
-except: certfile = 'cert.pem'
-
-#find out if tls/ssl can be used
-encryptable = True
-try:
-    import ssl
-except:
-    if forceencryption:
-        print 'Warning: not using secure connections becuase ssl is not supported.'
-    encryptable = False
-try:
-    open(certfile, 'r').read(1)
-except:
-    if forceencryption and encryptable == True: #only print one message
-        print 'Warning: not using secure connections becuase certfile not accessable.'
-    encryptable = False
-try:
-    ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), server_side=True, certfile=certfile, ssl_version=ssl.PROTOCOL_TLSv1)
-except:
-    print sys.exc_info()
-    if forceencryption and encryptable == True: #only print one message
-        print 'Warning: not using secure connections becuase certfile not usable.'
-    encryptable = False
-
-cryptinfo = (encryptable, forceencryption, certfile)
+from config import serverconf
+global config
+config = serverconf()
 
 clientlist = []
 port = 59387
@@ -81,8 +53,8 @@ def main():
     print "Accepting clients from port %d" % port
     while 1:
         c, info = sock.accept()
-        print "Handling connection request from %s." % info[0]
-        clientlist.append(client(c, info[0], sendmessage, sendto, cryptinfo))
+        print timestamp("Handling connection request from %s." % info[0])
+        clientlist.append(client(c, info[0], sendmessage, sendto, config))
 
 try:
     main()
