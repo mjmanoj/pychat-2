@@ -1,30 +1,10 @@
 import socket, thread, string, sys, time
-
-#load settings
-try:
-    #if you want to use a server other than localhost, add a file
-    #named serverinfo.py in the same directory as this file with
-    #one line: IP = '12.34.56.789' #change to the desired ip...
-    from serverinfo import IP
-except:
-    #if there is no serverinfo.py file, just use localhost
-    IP = 'localhost'
-
-try:
-    #you can also set whether or not to use a secure connection
-    from serverinfo import secure
-except:
-    secure = False
-
-global buffertext, bufferfull
-bufferfull = 0
-buffertext = ''
-
-global socketclosed
-socketclosed = 0
+from config import clientconf
+global config
+config = clientconf()
 
 class clientsock():
-    global socketclosed
+    global config
     def __init__(self, server, infoout):
         self.infoout = infoout
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -56,10 +36,10 @@ class clientsock():
     def secure(self): #converts self.s to a secure TLS socket if possible
         if self.secured:
             raise ValueError, "Socket already secure."
-        try:
-            import ssl
-        except:
+        if not config.sslavailable:
             raise ImportError, "SSL not supported by python installation."
+        else:
+            import ssl
         if self.recv() != 'go':
             raise IOError, "Pre-wrapping sanity check failed."
         self.send('now')
@@ -104,26 +84,26 @@ def netmanager(s, outfunc, infunc, killfunc):
             killfunc()
             return
 
-def callbacks(outfunc, infunc, killfunc, server=IP, encrypted=secure):
+def callbacks(outfunc, infunc, killfunc):
     outfunc("Connecting...")
     try:
-        s = clientsock((IP, 59387), outfunc)
+        s = clientsock((config.IP, 59387), outfunc)
     except:
         outfunc("Could not connect to server: " + str(sys.exc_info()[1]))
         killfunc()
     outfunc("Server found.")
-    s.send(str(int(encrypted)))
+    s.send(str(int(config.secure)))
     try:
         if int(s.recv()):
             outfunc("Securing connection...")
             s.secure()
             outfunc("Connection secure.")
         else:
-            if encrypted:
+            if config.secure:
                 raise IOError, "Server is not able to handle a secure connection."
     except:
-        if encrypted:
-            print sys.exc_info()[1]
+        if config.secure:
+            outfunc(sys.exc_info()[1])
             outfunc("Connection could not be secured. Exiting.")
             killfunc()
             return
