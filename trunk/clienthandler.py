@@ -34,12 +34,15 @@ class client():
         data = data.strip("\xaa")
         return data
 
-    def secure(self): #converts self.c into a secure TLS socket if possible
+    def secure(self, serving): #converts self.c into a secure TLS socket if possible
         import ssl
         self.c.send('go')
         if self.c.recv(1024) != 'now':
             raise IOError, "Pre-wrapping sanity check failed."
-        self.c = ssl.wrap_socket(self.c, server_side=True, certfile=config.certfile, ssl_version=ssl.PROTOCOL_TLSv1)
+        if serving:
+            self.c = ssl.wrap_socket(self.c, server_side=True, certfile=config.certfile, ssl_version=ssl.PROTOCOL_TLSv1)
+        else:
+            self.c = ssl.wrap_socket(self.c, ssl_version=ssl.PROTOCOL_TLSv1)
         self.c.send('it works?')
         if self.c.recv(1024) != 'heard you!':
             raise IOError, "Post-wrapping sanity check failed."
@@ -70,15 +73,25 @@ class client():
     #the "main" function
     def mainthread(self):
         try:
-            wantsencryption = int(self.recv())
-            if (config.sslavailable and config.goodcert) and (wantsencryption or config.forceencryption): #if encryption is possible and the client or the server wants encryption:
-                self.send('1')
-                self.secure()
-                print 'Using secure connection with %s' % self.ip
+            clientprefs = self.recv()
+            clientwantsencryption = int(clientprefs[0])
+            clientcanserve = int(clientprefs[1])
+            encryptionpossible = False
+            if config.sslavailable and (clientcanserve or config.canserve):
+                #if the server can do any kind of encryption and either party can serve
+                encryptionpossible = True
+            if config.canserve:
+                serving = True
             else:
-                self.send('0')
+                serving = False
+            self.send(str(int(encryptionpossible)) + str(int(serving)))
+            #if encryption is not possible even though it is required by the client, it will d/c at this point
+            if encryptionpossible:
+                self.secure(serving)
+                print 'Using secure connection with %s (serving = %s)' % (self.ip, str(bool(serving)))
         except:
             print 'Securing connection with %s failed: %s' % (self.ip, str(sys.exc_info()[1]))
+            self.send('oops!') #this will trigger sanity checks to fail at the client, rather than just a hang.
             return
         try:
             tmpnick = self.getnick()
