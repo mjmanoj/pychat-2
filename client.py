@@ -33,7 +33,7 @@ class clientsock():
         except:
             self.close()
 
-    def secure(self): #converts self.s to a secure TLS socket if possible
+    def secure(self, serving): #converts self.s to a secure TLS socket if possible
         if self.secured:
             raise ValueError, "Socket already secure."
         if not config.sslavailable:
@@ -43,7 +43,10 @@ class clientsock():
         if self.recv() != 'go':
             raise IOError, "Pre-wrapping sanity check failed."
         self.send('now')
-        self.s = ssl.wrap_socket(self.s, ssl_version=ssl.PROTOCOL_TLSv1)
+        if serving:
+            self.s = ssl.wrap_socket(self.s, server_side=True, certfile=config.certfile, ssl_version=ssl.PROTOCOL_TLSv1)
+        else:
+            self.s = ssl.wrap_socket(self.s, ssl_version=ssl.PROTOCOL_TLSv1)
         if self.recv() != 'it works?':
             raise IOError, "Post-wrapping sanity check failed."
         self.send('heard you!')
@@ -92,11 +95,15 @@ def callbacks(outfunc, infunc, killfunc):
         outfunc("Could not connect to server: " + str(sys.exc_info()[1]))
         killfunc()
     outfunc("Server found.")
-    s.send(str(int(config.secure)))
+    s.send(str(int(config.secure)) + str(int(config.canserve)))
+    cryptresults = s.recv()
+    usingcrypt = int(cryptresults[0])
+    serving = not int(cryptresults[1]) #client serving bool is inverse of corresponding server bool
     try:
-        if int(s.recv()):
+        if usingcrypt:
             outfunc("Securing connection...")
-            s.secure()
+            if serving: outfunc("Serving SSL/TLS.")
+            s.secure(serving)
             outfunc("Connection secure.")
         else:
             if config.secure:
