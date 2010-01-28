@@ -12,6 +12,7 @@ class client():
         self.monocast = monocast
         self.closed = False
         self.nick = ip #temporary handle, until one is assigned.
+        self.ready = False
         thread.start_new_thread(self.mainthread, tuple([]))
 
     def __del__(self):
@@ -112,6 +113,7 @@ class client():
         time.sleep(0.1)
         self.bcast("%s joined!" % self.nick, 'tehsrvr')
         self.welcome()
+        self.ready = True
         while 1: #recv loop. spends most of time on self.recv()
             try:
                 message = self.recv()

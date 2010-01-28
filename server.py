@@ -24,6 +24,8 @@ def timestamp(text):
     return text
 
 def clientsend(client, text):
+    if not client.ready:
+        return
     if client.send(text):
         clientlist.remove(client)
 
