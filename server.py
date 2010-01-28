@@ -5,13 +5,16 @@ global config
 config = serverconf()
 
 clientlist = []
-port = 59387
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.bind(('', port))
+if not config.devmode:
+    bindto = ''
+    port = 59387
+else:
+    bindto = 'localhost'
+    port = 59287
+    print "Using dev mode, see googlecode documentation for more details!!!"
+sock.bind((bindto, port))
 sock.listen(5) #listen for up to 5 new incoming requests at the same moment
-
-outmessagetext = ''
-outmessageid = -1
 
 def timestamp(text):
     stamp = time.localtime()
