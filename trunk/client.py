@@ -88,9 +88,16 @@ def netmanager(s, outfunc, infunc, killfunc):
             return
 
 def callbacks(outfunc, infunc, killfunc):
+    if not config.devmode:
+        server = config.IP
+        port = 59387
+    else:
+        server = 'localhost'
+        port = 59287
+        outfunc("Using dev mode, see googlecode documentation for more details!!!")
     outfunc("Connecting...")
     try:
-        s = clientsock((config.IP, 59387), outfunc)
+        s = clientsock((server, port), outfunc)
     except:
         outfunc("Could not connect to server: " + str(sys.exc_info()[1]))
         killfunc()

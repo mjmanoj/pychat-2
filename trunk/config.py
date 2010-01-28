@@ -23,6 +23,10 @@ except: pass
 if certfile == None:
     certfile = 'cert.pem'
 
+#load global settings
+try:    from commonconf import devmode
+except: devmode = False
+
 #find out if tls/ssl can be used
 sslavailable = True
 try:
@@ -39,6 +43,7 @@ class serverconf():
         self.forceencryption = forceencryption
         self.sslavailable = sslavailable
         self.canserve = hascert
+        self.devmode = devmode
 
 class clientconf():
     #This is really a namespace. It should be considered read-only!
@@ -50,3 +55,4 @@ class clientconf():
         self.IP = IP
         self.canserve = configuredtoserve
         self.certfile = certfile
+        self.devmode = devmode
