@@ -11,11 +11,13 @@ class client():
         self.bcast = bcast
         self.monocast = monocast
         self.closed = False
+        self.nick = ip #temporary handle, until one is assigned.
         thread.start_new_thread(self.mainthread, tuple([]))
 
     def __del__(self):
         self.close()
 
+    #connection handling functions
     def send(self, text):
         if self.closed: return
         try:

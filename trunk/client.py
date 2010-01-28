@@ -72,6 +72,8 @@ def inputthread(infunc, s):
 def netmanager(s, outfunc, infunc, killfunc):
     while 1:
         command = s.recv()
+        if command == None:
+            command = '!TERMINATE'
         if not command.startswith("!"):
             outfunc(command)
         elif command.startswith("!CHATMODE"):
@@ -81,7 +83,8 @@ def netmanager(s, outfunc, infunc, killfunc):
             outfunc(string.replace(command, "!NOTE ", "Server: "))
         elif command.startswith("!TERMINATE"):
             outfunc("Client terminated.")
-            s.close()
+            if not s.closed:
+                s.close()
             socketclosed = 1
             time.sleep(0.1)
             killfunc()
