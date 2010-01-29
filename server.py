@@ -1,4 +1,4 @@
-import socket, sys, time, string, ssl
+import socket, sys, time, string
 from clienthandler import client
 from config import serverconf
 global config

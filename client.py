@@ -111,7 +111,7 @@ def callbacks(outfunc, infunc, killfunc):
     serving = not int(cryptresults[1]) #client serving bool is inverse of corresponding server bool
     try:
         if usingcrypt:
-            outfunc("Securing connection...")
+            outfunc("Securing connection (requested by server: %s)..." % str(bool(usingcrypt and not config.secure)))
             if serving: outfunc("Serving SSL/TLS.")
             s.secure(serving)
             outfunc("Connection secure.")
@@ -119,11 +119,10 @@ def callbacks(outfunc, infunc, killfunc):
             if config.secure:
                 raise IOError, "Server is not able to handle a secure connection."
     except:
-        if config.secure:
-            outfunc(sys.exc_info()[1])
-            outfunc("Connection could not be secured. Exiting.")
-            killfunc()
-            return
+        outfunc(sys.exc_info()[1])
+        outfunc("Connection could not be secured. Exiting.")
+        killfunc()
+        return
     nick = (infunc("Enter nickname: "))
     s.send(nick)
     netmanager(s, outfunc, infunc, killfunc)
