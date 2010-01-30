@@ -53,7 +53,7 @@ class App:
         self.box.config(state=NORMAL)
         self.box.insert(END,"\n"+text)
         self.box.config(state=DISABLED)
-        self.box.yview_scroll(1,"units")
+        self.box.yview_scroll(10000,"units")
 
     def quitbutton(self):
         root.quit()
