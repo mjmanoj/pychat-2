@@ -1,5 +1,3 @@
-import sys, socket, thread, time
-
 certfile = None #this one could be set in either file, so it needs special treatment
 
 #load client settings

@@ -1,5 +1,5 @@
 from messageboard import postmessage, countmessages, listmessages, readmessage, delmessage
-from namekeeper import registernick, freenick, changenick, nickregistered, nicklist
+from namekeeper import registernick, freenick, changenick, nicklist
 import thread, string, sys, time
 
 class client():
@@ -40,14 +40,14 @@ class client():
     def secure(self, serving): #converts self.c into a secure TLS socket if possible
         import ssl
         self.c.send('go')
-        if self.c.recv(1024) != 'now':
+        if self.recv() != 'now':
             raise IOError, "Pre-wrapping sanity check failed."
         if serving:
             self.c = ssl.wrap_socket(self.c, server_side=True, certfile=config.certfile, ssl_version=ssl.PROTOCOL_TLSv1)
         else:
             self.c = ssl.wrap_socket(self.c, ssl_version=ssl.PROTOCOL_TLSv1)
         self.c.send('it works?')
-        if self.c.recv(1024) != 'heard you!':
+        if self.recv() != 'heard you!':
             raise IOError, "Post-wrapping sanity check failed."
         self.c.send('completed with success.')
         return
@@ -79,15 +79,21 @@ class client():
             clientprefs = self.recv()
             clientwantsencryption = int(clientprefs[0])
             clientcanserve = int(clientprefs[1])
-            encryptionpossible = False
             if config.sslavailable and (clientcanserve or config.canserve):
                 #if the server can do any kind of encryption and either party can serve
                 encryptionpossible = True
+            else:
+                encryptionpossible = False
+            if encryptionpossible and (clientwantsencryption or
+                                       config.forceencryption):
+                usingencryption = True
+            else:
+                usingencryption = False
             if config.canserve:
                 serving = True
             else:
                 serving = False
-            self.send(str(int(encryptionpossible)) + str(int(serving)))
+            self.send(str(int(usingencryption)) + str(int(serving)))
             #if encryption is not possible even though it is required by the client, it will d/c at this point
             if encryptionpossible:
                 self.secure(serving)
