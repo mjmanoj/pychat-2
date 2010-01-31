@@ -26,8 +26,9 @@ def freenick(nick):
     return 0
 
 def changenick(old, new):
-    if nickregistered(new): return 1
-    if not (registernick(new) or freenick(old)):
+    if registernick(new) or freenick(old):
+        return 1
+    else:
         return 0
 
 def nickregistered(nick):

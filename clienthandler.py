@@ -139,7 +139,7 @@ class client():
 
     def command(self, message): #handles command messages
         if message.startswith("/me "):
-            message = string.replace(message, "/me ", "")
+            message = message[3:]
             self.bcast(" * %s %s" % (self.nick,message), self.nick)
         
         elif message == '/list':
@@ -151,9 +151,13 @@ class client():
             if self.monocast(self.nick, targetnick, text):
                 self.send('!NOTE Error sending PM.')
         
-        elif message.startswith('/nick '):
+        elif message.startswith('/nick'):
             oldnick = self.nick
-            newnick = string.split(message)[1]
+            try:
+                newnick = string.split(message)[1]
+            except IndexError:
+                self.send('!NOTE Missing argument!')
+                return
             if len(newnick) > 10:
                 newnick = newnick[:10]
                 self.send("!NOTE Nickname truncated to %s" % newnick)
