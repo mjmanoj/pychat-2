@@ -1,12 +1,19 @@
+import re
+
 namelist = []
-def registernick(nick):
-    collision = 0
-    if len(nick) < 1 or nick == "tehsrvr": #that one is permenantly reserved for server use
+
+def checknick(nick):
+    if (len(nick) < 1 or
+        len(nick) > 10 or
+        nick == "tehsrvr" or #that one is permanently reserved for server use
+        re.compile('[^a-zA-Z0-9]').search(nick) or
+        nickregistered(nick)):
         return 1
-    for usedname in namelist:
-        if nick == usedname:
-            collision = 1
-    if collision:
+    else:
+        return 0
+
+def registernick(nick):
+    if checknick(nick):
         return 1
     else:
         namelist.append(nick)
@@ -18,8 +25,8 @@ def freenick(nick):
 
 def changenick(old, new):
     if nickregistered(new): return 1
-    namelist.remove(old)
-    namelist.append(new)
+    if freenick(old) or registernick(new):
+        return 0
 
 def nickregistered(nick):
     collision = 0
