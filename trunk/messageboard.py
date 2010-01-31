@@ -1,4 +1,4 @@
-import os, sys, time, string
+import os, sys, string
 
 #make a messages directory if it doesn't exist
 try:
