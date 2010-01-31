@@ -85,7 +85,6 @@ def netmanager(s, outfunc, infunc, killfunc):
             outfunc("Client terminated.")
             if not s.closed:
                 s.close()
-            socketclosed = 1
             time.sleep(0.1)
             killfunc()
             return
