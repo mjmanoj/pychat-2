@@ -119,7 +119,7 @@ def callbacks(outfunc, infunc, killfunc):
             if config.secure:
                 raise IOError, "Server is not able to handle a secure connection."
     except:
-        outfunc(sys.exc_info()[1])
+        outfunc(str(sys.exc_info()[1]))
         outfunc("Connection could not be secured. Exiting.")
         killfunc()
         return
