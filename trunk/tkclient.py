@@ -51,7 +51,7 @@ class App:
 
     def printtex(self, text):
         self.box.config(state=NORMAL)
-        self.box.insert(END,"\n"+str(text))
+        self.box.insert(END,"\n"+text)
         self.box.config(state=DISABLED)
         self.box.yview_scroll(10000,"units")
 
