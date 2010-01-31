@@ -20,12 +20,14 @@ def registernick(nick):
         return 0
 
 def freenick(nick):
+    if not nickregistered(nick):
+        return 1
     namelist.remove(nick)
-    return
+    return 0
 
 def changenick(old, new):
     if nickregistered(new): return 1
-    if freenick(old) or registernick(new):
+    if not (registernick(new) or freenick(old)):
         return 0
 
 def nickregistered(nick):
