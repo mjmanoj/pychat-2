@@ -25,6 +25,9 @@ class client():
             self.c.send(text)
         except: #sending didn't work
             print "Client %s no longer available" % self.nick
+            if self.ip != self.nick: #if the client still has a registered nick
+                freenick(self.nick)
+                self.nick = self.ip
             self.close()
             return 1
 
@@ -62,7 +65,7 @@ class client():
     def getnick(self):
         tmpnick = self.recv()
         if len(tmpnick) > 10:
-            tmpnick = tmpnick[:9]
+            tmpnick = tmpnick[:10]
             self.send("!NOTE Nickname truncated to %s" % tmpnick)
         return tmpnick
 
@@ -107,8 +110,8 @@ class client():
         except:
             print '%s getnick failed: %s' % (self.ip, str(sys.exc_info()[1]))
             return
-        if registernick(tmpnick) > 0: #if the nick cannot be registered
-            self.send("!NOTE Nickname in use.")
+        if registernick(tmpnick) > 0:
+            self.send("!NOTE Nickname could not be registered!")
             self.send("!TERMINATE")
             self.close()
             return
@@ -125,7 +128,9 @@ class client():
                 message = self.recv()
             except:
                 self.bcast("%s quit: %s" % (self.nick, str(sys.exc_info()[1])), "tehsrvr")
-                freenick(self.nick)
+                if self.ip != self.nick: #if the client still has a registered nick
+                    freenick(self.nick)
+                    self.nick = self.ip
                 break
             if message.startswith('/'):
                 self.command(message)
@@ -149,8 +154,11 @@ class client():
         elif message.startswith('/nick '):
             oldnick = self.nick
             newnick = string.split(message)[1]
-            if changenick(oldnick, newnick) > 0: #if the nick is used
-                self.send("!NOTE Nickname in use.")
+            if len(newnick) > 10:
+                newnick = newnick[:10]
+                self.send("!NOTE Nickname truncated to %s" % newnick)
+            if changenick(oldnick, newnick) > 0: #if there is an error
+                self.send("!NOTE Nickname could not be changed!")
                 return
             self.nick = newnick
             self.bcast(' * The user %s is now known as %s' % (oldnick, self.nick), 'tehsrvr')
