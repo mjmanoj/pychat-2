@@ -1,29 +1,32 @@
 certfile = None #this one could be set in either file, so it needs special treatment
 
+def getvalue(name, default):
+    #returns the value of the variable named by name, if it is defined.
+    #otherwise, it returns the contents of default
+    try:
+        return eval(name)
+    except:
+        return default
+
 #load client settings
-try:    from serverinfo import IP
-except: IP = 'localhost'
-try:    from serverinfo import secure
-except: secure = False
-try:    from serverinfo import configuredtoserve
-except: configuredtoserve = False
-try:    from serverinfo import certfile
+try:    import serverinfo as clientconf
 except: pass
+IP                  = getvalue('clientconf.IP',                'localhost')
+secure              = getvalue('clientconf.secure',            False)
+configuredtoserve   = getvalue('clientconf.configuredtoserve', False)
+certfile            = getvalue('clientconf.certfile',          'cert.pem')
 
 #load server settings
-try:    from serverconf import hascert
-except: hascert = False
-try:    from serverconf import forceencryption
-except: forceencryption = False
-try:    from serverconf import certfile
+try:    import serverconf
 except: pass
-
-if certfile == None:
-    certfile = 'cert.pem'
+hascert         = getvalue('serverconf.hascert',            configuredtoserve)
+forceencryption = getvalue('serverconf.forceencryption',    False)
+certfile        = getvalue('serverconf.certfile',           certfile)
 
 #load global settings
-try:    from commonconf import devmode
-except: devmode = False
+try:    import commonconf
+except: pass
+devmode = getvalue('commonconf.devmode', False)
 
 #find out if tls/ssl can be used
 sslavailable = True
