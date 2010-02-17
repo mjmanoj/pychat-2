@@ -18,8 +18,11 @@ sock.listen(5) #listen for up to 5 new incoming requests at the same moment
 
 def timestamp(text):
     stamp = time.localtime()
-    asciistamp = "%d:%d" % (stamp.tm_hour, stamp.tm_min)
-    if stamp.tm_min < 10: asciistamp = string.replace(asciistamp, ':', ':0')
+    asciistamp = str(stamp.tm_hour)
+    if stamp.tm_min < 10:   asciistamp += ':0' + str(stamp.tm_min)
+    else:                   asciistamp += ':'+ str(stamp.tm_min)
+    if stamp.tm_sec < 10:   asciistamp += ':0' + str(stamp.tm_sec)
+    else:                   asciistamp += ':' + str(stamp.tm_sec)
     text = asciistamp + " " + text
     return text
 
