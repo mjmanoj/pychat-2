@@ -181,7 +181,7 @@ class client():
             except:
                 self.send('!NOTE Error parsing request: '+str(sys.exc_info()[1])+'\nYou might want to report this to the server operator.')
                 return
-            self.send("!NOTE "+postmessage(title, text))
+            self.send("!NOTE "+postmessage(title, text, self.nick))
         
         elif message.startswith('/msgread '):
             try:
