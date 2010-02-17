@@ -139,7 +139,7 @@ class client():
 
     def command(self, message): #handles command messages
         if message.startswith("/me "):
-            message = message[3:]
+            message = message[4:]
             self.bcast(" * %s %s" % (self.nick,message), self.nick)
         
         elif message == '/list':
