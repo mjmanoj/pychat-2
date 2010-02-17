@@ -1,4 +1,4 @@
-import socket, sys, time, string
+import socket, sys, time
 from clienthandler import client
 from config import serverconf
 global config
@@ -16,15 +16,18 @@ else:
 sock.bind((bindto, port))
 sock.listen(5) #listen for up to 5 new incoming requests at the same moment
 
-def timestamp(text):
+def timestamp(text = None):
     stamp = time.localtime()
     asciistamp = str(stamp.tm_hour)
     if stamp.tm_min < 10:   asciistamp += ':0' + str(stamp.tm_min)
     else:                   asciistamp += ':'+ str(stamp.tm_min)
     if stamp.tm_sec < 10:   asciistamp += ':0' + str(stamp.tm_sec)
     else:                   asciistamp += ':' + str(stamp.tm_sec)
-    text = asciistamp + " " + text
-    return text
+    if text != None:
+        text = asciistamp + " " + text
+        return text
+    else:
+        return asciistamp
 
 def clientsend(client, text):
     if not client.ready:
