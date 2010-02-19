@@ -98,7 +98,7 @@ class client():
                 serving = False
             self.send(str(int(usingencryption)) + str(int(serving)))
             #if encryption is not possible even though it is required by the client, it will d/c at this point
-            if encryptionpossible:
+            if usingencryption:
                 self.secure(serving)
                 print 'Using secure connection with %s (serving = %s)' % (self.ip, str(bool(serving)))
         except:
