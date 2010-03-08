@@ -76,12 +76,14 @@ def netmanager(s, outfunc, infunc, killfunc):
             command = '!TERMINATE'
         if not command.startswith("!"):
             outfunc(command)
-        elif command.startswith("!CHATMODE"):
+        elif command == "!CHATMODE":
             outfunc("Nickname accepted, entering chat mode.")
             thread.start_new_thread(inputthread, tuple([infunc, s]))
         elif command.startswith("!NOTE"):
             outfunc(string.replace(command, "!NOTE ", "Server: "))
-        elif command.startswith("!TERMINATE"):
+        elif command == "!PING":
+            s.send("/PONG")
+        elif command == "!TERMINATE":
             outfunc("Client terminated.")
             if not s.closed:
                 s.close()
