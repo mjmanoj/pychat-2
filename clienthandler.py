@@ -13,6 +13,7 @@ class client():
         self.closed = False
         self.nick = ip #temporary handle, until one is assigned.
         self.ready = False
+        self.pingtime = 0
         thread.start_new_thread(self.mainthread, tuple([]))
 
     def __del__(self):
@@ -39,6 +40,17 @@ class client():
             raise IOError, "Client quit (connection interrupted)."
         data = data.strip("\xaa")
         return data
+
+    def pingthread(self):
+        while not self.closed:
+            time.sleep(1)
+            self.pingtime += 1
+            if self.pingtime > 60:
+                self.send("!PING")
+            if self.pingtime > 100:
+                self.send("!NOTE Ping timeout exceeded, kicking!") #tell the user about it if possible.
+                print "Ping time exceeded by client %s!" % self.nick
+                self.close()
 
     def secure(self, serving): #converts self.c into a secure TLS socket if possible
         import ssl
@@ -122,6 +134,7 @@ class client():
         time.sleep(0.1)
         self.bcast("%s joined!" % self.nick, 'tehsrvr')
         self.welcome()
+        thread.start_new_thread(self.pingthread, ())
         self.ready = True
         while 1: #recv loop. spends most of time on self.recv()
             try:
@@ -169,6 +182,9 @@ class client():
         
         elif message == '/exit':
             self.send('!TERMINATE')
+        elif message == '/PONG': #system use only
+            print "pingback from " + self.nick
+            self.pingtime = 0
         
         #messageboard commands
         elif message == '/msglist':
