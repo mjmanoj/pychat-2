@@ -183,7 +183,6 @@ class client():
         elif message == '/exit':
             self.send('!TERMINATE')
         elif message == '/PONG': #system use only
-            print "pingback from " + self.nick
             self.pingtime = 0
         
         #messageboard commands
