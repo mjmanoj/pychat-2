@@ -12,6 +12,7 @@ def getvalue(name, default):
 try:    import serverinfo as clientconf
 except: pass
 IP                  = getvalue('clientconf.IP',                'localhost')
+cport               = getvalue('clientconf.port',              59387)
 secure              = getvalue('clientconf.secure',            False)
 configuredtoserve   = getvalue('clientconf.configuredtoserve', False)
 certfile            = getvalue('clientconf.certfile',          'cert.pem')
@@ -19,6 +20,8 @@ certfile            = getvalue('clientconf.certfile',          'cert.pem')
 #load server settings
 try:    import serverconf
 except: pass
+sbind           = getvalue('serverconf.bind',               '')
+sport           = getvalue('serverconf.port',               59387)
 hascert         = getvalue('serverconf.hascert',            configuredtoserve)
 forceencryption = getvalue('serverconf.forceencryption',    False)
 certfile        = getvalue('serverconf.certfile',           certfile)
@@ -40,6 +43,8 @@ class serverconf():
     def __init__(self):
         if not sslavailable:
             print "Warning: SSL module not available. Encryption cannot be used."
+        self.bind = sbind
+        self.port = sport
         self.certfile = certfile
         self.forceencryption = forceencryption
         self.sslavailable = sslavailable
@@ -54,6 +59,7 @@ class clientconf():
         self.sslavailable = sslavailable
         self.secure = secure
         self.IP = IP
+        self.port = cport
         self.canserve = configuredtoserve
         self.certfile = certfile
         self.devmode = devmode

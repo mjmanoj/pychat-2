@@ -7,8 +7,8 @@ config = serverconf()
 clientlist = []
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 if not config.devmode:
-    bindto = ''
-    port = 59387
+    bindto = config.bind
+    port = config.port
 else:
     bindto = 'localhost'
     port = 59287
